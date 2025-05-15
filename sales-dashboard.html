@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>매출 향상 인사이트 대시보드</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.5.0/Recharts.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            margin-bottom: 24px;
+        }
+        .title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #6b7280;
+            font-size: 1rem;
+        }
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+        }
+        .tab {
+            padding: 12px 16px;
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+        .tab:hover:not(.active) {
+            color: #3b82f6;
+        }
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            background-color: #eff6ff;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .kpi-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+        .kpi-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+        .chart-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 16px;
+        }
+        .insight-box {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 16px;
+            font-size: 0.875rem;
+            color: #4b5563;
+        }
+        .insight-title {
+            font-weight: 600;
+            margin-right: 4px;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .strategy-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            display: flex;
+        }
+        .strategy-number {
+            background-color: #eff6ff;
+            border-radius: 100%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2563eb;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+        .strategy-content {
+            flex-grow: 1;
+        }
+        .strategy-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+        .strategy-description {
+            color: #6b7280;
+            margin-bottom: 16px;
+        }
+        .metrics-container {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .metric-box {
+            background-color: #f3f4f6;
+            padding: 12px;
+            border-radius: 6px;
+            flex: 1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background-color: #eff6ff;
+            padding: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #4b5563;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.875rem;
+            color: #4b5563;
+        }
+        tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">매출 향상 인사이트 대시보드</h1>
+            <p class="subtitle">최근 6개월 데이터 기반 매출 증대 전략 (2022-02-01 ~ 2022-07-31)</p>
+        </div>
+
+        <div class="tab-container">
+            <div class="tab active" data-tab="overview">개요</div>
+            <div class="tab" data-tab="customer">고객 분석</div>
+            <div class="tab" data-tab="promotion">프로모션 분석</div>
+            <div class="tab" data-tab="payment">결제 방법 분석</div>
+            <div class="tab" data-tab="time">시간 패턴 분석</div>
+            <div class="tab" data-tab="strategies">매출 향상 전략</div>
+        </div>
+
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <div class="kpi-label">총 매출</div>
+                <div class="kpi-value">913.7억원</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">거래 건수</div>
+                <div class="kpi-value">166,382건</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">평균 주문액</div>
+                <div class="kpi-value">54.9만원</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">고유 고객 수</div>
+                <div class="kpi-value">30,872명</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">월 평균 성장률</div>
+                <div class="kpi-value">1.31%</div>
+            </div>
+        </div>
+
+        <!-- 개요 탭 -->
+        <div id="overview" class="tab-content active">
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3 class="chart-title">월별 매출 트렌드</h3>
+                    <canvas id="monthly-revenue-chart" height="300"></canvas>
+                    <div class="insight-box">
+                        <span class="insight-title">인사이트:</span> 5월에 매출이 가장 높았으며(164억원), 이후 감소 추세를 보입니다. 
+                        6-7월 매출 감소에 대응하는 전략 수립이 필요합니다.
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 class="chart-title">월별 성장률 추이</h3>
+                    <canvas id="monthly-growth-chart" height="300"></canvas>
+                    <div class="insight-box">
+                        <span class="insight-title">인사이트:</span> 월 평균 성장률은 1.31%로 소폭 성장 중이지만, 
+                        6-7월에는 각각 -4.58%, -11.56%로 감소했습니다.
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container" style="background: linear-gradient(to right, #f0f9ff, #ebf5ff);">
+                <h2 class="chart-title" style="color: #1e40af;">핵심 인사이트 요약</h2>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                    <div style="display: flex; align-items: flex-start;">
+                        <div style="background-color: #dbeafe; border-radius: 100%; padding: 8px; margin-right: 12px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        </div>
+                        <div>
+                            <h3 style="font-weight: 500; color: #1f2937; margin-bottom: 4px;">VIP 고객이 매출의 절반 차지</h3>
+                            <p style="font-size: 0.875rem; color: #6b7280;">11회 이상 구매한 고객(전체의 13.75%)이 매출의 46.84%를 차지합니다.</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: flex-start;">
+                        <div style="background-color: #dbeafe; border-radius: 100%; padding: 8px; margin-right: 12px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                        </div>
+                        <div>
+                            <h3 style="font-weight: 500; color: #1f2937; margin-bottom: 4px;">소액 프로모션의 높은 효율성</h3>
+                            <p style="font-size: 0.875rem; color: #6b7280;">5천원 이하 프로모션의 ROI가 가장 높습니다(158.84).</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: flex-start;">
+                        <div style="background-color: #dbeafe; border-radius: 100%; padding: 8px; margin-right: 12px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                        </div>
+                        <div>
+                            <h3 style="font-weight: 500; color: #1f2937; margin-bottom: 4px;">신용카드의 높은 고객 충성도</h3>
+                            <p style="font-size: 0.875rem; color: #6b7280;">신용카드 결제 고객의 평균 구매 횟수가 가장 높습니다(3.77회).</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: flex-start;">
+                        <div style="background-color: #dbeafe; border-radius: 100%; padding: 8px; margin-right: 12px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                        <div>
+                            <h3 style="font-weight: 500; color: #1f2937; margin-bottom: 4px;">일요일과 심야 시간의 높은 매출</h3>
+                            <p style="font-size: 0.875rem; color: #6b7280;">일요일과 심야 시간대(0시, 23시, 1시)의 매출이 가장 높습니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 고객 분석 탭 -->
+        <div id="customer" class="tab-content">
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3 class="chart-title">고객 세그먼트별 매출 기여도</h3>
+                    <canvas id="customer-revenue-chart" height="300"></canvas>
+                    <div class="insight-box">
+                        <span class="insight-title">인사이트:</span> 11회 이상 구매 고객이 매출의 46.84%를 차지합니다. 
+                        이 핵심 고객층의 관리와 확대가 매출 향상의 핵심입니다.
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 class="chart-title">고객 세그먼트별 고객 수 분포</h3>
+                    <canvas id="customer-segment-chart" height="300"></canvas>
+                    <div class="insight-box">
+                        <span class="insight-title">인사이트:</span> 한 번만 구매한 고객이 전체의 27.87%로 가장 많지만, 
+                        매출 기여도는 5.08%에 불과합니다. 재구매 유도 전략이 필요합니다.
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">고객 세그먼트별 상세 분석</h3>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>고객 세그먼트</th>
+                                <th>고객 수</th>
+                                <th>고객 비율</th>
+                                <th>총 매출 기여</th>
+                                <th>매출 기여도</th>
+                                <th>고객당 평균 매출</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1회 구매</td>
+                                <td>8,603명</td>
+                                <td>27.87%</td>
+                                <td>46.4억원</td>
+                                <td>5.08%</td>
+                                <td>53.9만원</td>
+                            </tr>
+                            <tr>
+                                <td>2회 구매</td>
+                                <td>4,855명</td>
+                                <td>15.73%</td>
+                                <td>53.0억원</td>
+                                <td>5.80%</td>
+                                <td>109.2만원</td>
+                            </tr>
+                            <tr>
+                                <td>3-5회 구매</td>
+                                <td>7,860명</td>
+                                <td>25.46%</td>
+                                <td>163.8억원</td>
+                                <td>17.93%</td>
+                                <td>208.4만원</td>
+                            </tr>
+                            <tr>
+                                <td>6-10회 구매</td>
+                                <td>5,310명</td>
+                                <td>17.20%</td>
+                                <td>222.5억원</td>
+                                <td>24.35%</td>
+                                <td>419.0만원</td>
+                            </tr>
+                            <tr>
+                                <td>11회 이상 구매</td>
+                                <td>4,244명</td>
+                                <td>13.75%</td>
+                                <td>428.0억원</td>
+                                <td>46.84%</td>
+                                <td>1,008.5만원</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="insight-box">
+                    <span class="insight-title">핵심 전략:</span> 6-10회 구매 고객(17.20%)을 11회 이상 구매 고객으로 전환하면 
+                    매출을 크게 향상시킬 수 있습니다. 또한, 1-2회 구매 고객의 재구매율을 높이는 전략이 필요합니다.
+                </div>
+            </div>
+        </div>
+
+        <!-- 프로모션 분석 탭 -->
+        <div id="promotion" class="tab-content">
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3 class="chart-title">프로모션 사용 여부에 따른 매출 비교</h3>
+                    <canvas id="promo-usage-chart" height="300"></canvas>
+                    <div class="insight-box">
+                        <span class="insight-title">인사이트:</span> 프로모션을 사용한 거래는 전체의 31.25%를 차지하며,
+                        프로모션 미사용 거래의 평균 주문액(55.2만원)이 사용 거래(54.3만원)보다 약간 높습니다.
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 class="chart-title">프로모션 금액별 효율성 분석</h3>
+                    <canvas id="promo-efficiency-chart" height="300"></canvas>
+                    <div class="insight-box">
+                        <span class="insight-title">인사이트:</span> 5천원 이하 소액 프로모션의 효율성(ROI)이 158.84로 가장 높으며,
+                        프로모션 금액이 증가할수록 효율성은 감소합니다.
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">프로모션 금액별 상세 분석</h3>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>프로모션 금액대</th>
+                                <th>거래 건수</th>
+                                <th>총 매출</th>
+                                <th>평균 주문액</th>
+                                <th>평균 프로모션 금액</th>
+                                <th>효율성 (ROI)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>5천원 이하</td>
+                                <td>27,605건</td>
+                                <td>149.3억원</td>
+                                <td>54.1만원</td>
+                                <td>3,404원</td>
+                                <td>158.84</td>
+                            </tr>
+                            <tr>
+                                <td>5천-1만원</td>
+                                <td>21,904건</td>
+                                <td>120.4억원</td>
+                                <td>55.0만원</td>
+                                <td>6,917원</td>
+                                <td>79.47</td>
+                            </tr>
+                            <tr>
+                                <td>1-2만원</td>
+                                <td>3,092건</td>
+                                <td>15.6억원</td>
+                                <td>50.6만원</td>
+                                <td>11,150원</td>
+                                <td>45.36</td>
+                            </tr>
+                            <tr>
+                                <td>2-5만원</td>
+                                <td>18건</td>
+                                <td>0.2억원</td>
+                                <td>118.7만원</td>
+                                <td>71,741원</td>
+                                <td>16.54</td>
+                            </tr>
+                            <tr>
+                                <td>5만원 이상</td>
+                                <td>0건</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="insight-box">
+                    <span class="insight-title">핵심 전략:</span> 5천원 이하 소액 프로모션의 비중을 늘리고,
+                    고객 세그먼트별 타겟 프로모션 전략을 수립하는 것이 효과적입니다.
+                </div>
+            </div>
+        </div>
+
+        <!-- 결제 방법 분석 탭 -->
+        <div id="payment" class="tab-content">
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3 class="chart-title">결제 방법별 매출 기여도</h3>
+                    <canvas id="payment-share-chart" height="300"></canvas>
+                    <div class="insight-box">
+                        <span class="insight-title">인사이트:</span> 신용카드가 전체 매출의 35.17%로 가장 높은 비중을 차지합니다.
+                        링크아자(LinkAja)의 비중은 9.04%로 가장 낮지만, 평균 주문액은 가장 높습니다.
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 class="chart-title">결제 방법별 고객 충성도</h3>
+                    <canvas id="payment-loyalty-chart" height="300"></canvas>
+                    <div class="insight-box">
+                        <span class="insight-title">인사이트:</span> 신용카드 사용 고객의 평균 주문 횟수가 3.77회로 가장 높아
+                        고객 충성도가 가장 높은 것으로 나타납니다.
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">결제 방법별 상세 분석</h3>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>결제 방법</th>
+                                <th>거래 건수</th>
+                                <th>총 매출</th>
+                                <th>평균 주문액</th>
+                                <th>고유 고객 수</th>
+                                <th>고객당 평균 주문 수</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Credit Card</td>
+                                <td>58,693건</td>
+                                <td>321.4억원</td>
+                                <td>54.8만원</td>
+                                <td>15,577명</td>
+                                <td>3.77회</td>
+                            </tr>
+                            <tr>
+                                <td>Gopay</td>
+                                <td>33,484건</td>
+                                <td>182.0억원</td>
+                                <td>54.4만원</td>
+                                <td>11,043명</td>
+                                <td>3.03회</td>
+                            </tr>
+                            <tr>
+                                <td>OVO</td>
+                                <td>32,977건</td>
+                                <td>181.2억원</td>
+                                <td>54.9만원</td>
+                                <td>10,797명</td>
+                                <td>3.05회</td>
+                            </tr>
+                            <tr>
+                                <td>Debit Card</td>
+                                <td>26,763건</td>
+                                <td>146.5억원</td>
+                                <td>54.7만원</td>
+                                <td>9,850명</td>
+                                <td>2.72회</td>
+                            </tr>
+                            <tr>
+                                <td>LinkAja</td>
+                                <td>14,465건</td>
+                                <td>82.6억원</td>
+                                <td>57.1만원</td>
+                                <td>7,565명</td>
+                                <td>1.91회</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="insight-box">
+                    <span class="insight-title">핵심 전략:</span> 신용카드 결제 고객을 위한 특별 혜택 제공으로 충성 고객 확보 및
+                    LinkAja 결제 방법 사용 장려를 통한 평균 주문액 증대가 효과적입니다.
+                </div>
+            </div>
+        </div>
+
+        <!-- 시간 패턴 분석 탭 -->
+        <div id="time" class="tab-content">
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3 class="chart-title">요일별 매출 패턴</h3>
+                    <canvas id="day-revenue-chart" height="300"></canvas>
+                    <div class="insight-box">
+                        <span class="insight-title">인사이트:</span> 일요일이 가장 높은 매출(153억 원)을 기록했으며,
+                        금요일이 가장 낮은 매출(121억 원)을 기록했습니다.
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 class="chart-title">시간대별 매출 패턴</h3>
+                    <canvas id="hour-revenue-chart" height="300"></canvas>
+                    <div class="insight-box">
+                        <span class="insight-title">인사이트:</span> 심야 시간대(0시, 23시, 1시)의 매출이 가장 높으며,
+                        오전 4-9시의 매출이 가장 낮습니다.
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">시간대별 거래 건수 히트맵</h3>
+                <div id="hour-heatmap" style="display: flex; flex-wrap: wrap; margin-top: 20px;">
+                    <!-- 히트맵은 자바스크립트로 생성됩니다 -->
+                </div>
+                <div class="insight-box" style="margin-top: 20px;">
+                    <span class="insight-title">핵심 전략:</span> 일요일 및 심야 시간대의 특별 이벤트 강화와
+                    금요일 및 오전 시간대의 특별 프로모션을 통한 매출 증대가 효과적입니다.
+                </div>
+            </div>
+        </div>
+
+        <!-- 매출 향상 전략 탭 -->
+        <div id="strategies" class="tab-content">
+            <div class="chart-container" style="background: linear-gradient(to right, #3b82f6, #4f46e5); color: white; margin-bottom: 24px;">
+                <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 8px;">매출 향상을 위한 5가지 핵심 전략</h2>
+                <p style="opacity: 0.9;">데이터 분석을 통해 도출한 실행 가능한 전략과 기대 효과</p>
+            </div>
+
+            <div class="strategy-card">
+                <div class="strategy-number">1</div>
+                <div class="strategy-content">
+                    <h3 class="strategy-title">VIP 고객 충성도 강화 전략</h3>
+                    <p class="strategy-description">11회 이상 구매 고객은 전체 고객의 13.75%에 불과하지만 매출의 46.84%를 차지합니다. 이 고객층을 더 관리하고 확대하는 것이 매출 향상의 핵심입니다.</p>
+                    
+                    <h4 style="font-weight: 600; color: #4b5563; margin-bottom: 8px;">실행 계획:</h4>
+                    <ul style="list-style-type: disc; padding-left: 20px; margin-bottom: 16px;">
+                        <li>VIP 전용 혜택 및 서비스 도입 (전용 상담사, 빠른 배송, 특별 할인)</li>
+                        <li>VIP 고객 전용 초대 이벤트 및 쇼핑 행사 개최</li>
+                        <li>구매 횟수에 따른 단계별 보상 시스템 도입 (6-10회 구매자를 11회 이상으로 전환)</li>
+                        <li>개인화된 상품 추천 및 프로모션 제공</li>
+                    </ul>
+                    
+                    <div class="metrics-container">
+                        <div class="metric-box">
+                            <p><span style="font-weight: 600;">핵심 성과 지표 (KPI):</span><br>
+                            VIP 고객 수 15% 증가, VIP 고객당 평균 구매액 5% 증가</p>
+                        </div>
+                        <div class="metric-box" style="background-color: #ecfdf5;">
+                            <p><span style="font-weight: 600;">기대 효과:</span><br>
+                            매출 8.2% 증가 예상</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="strategy-card">
+                <div class="strategy-number">2</div>
+                <div class="strategy-content">
+                    <h3 class="strategy-title">프로모션 최적화 전략</h3>
+                    <p class="strategy-description">5천원 이하의 소액 프로모션이 ROI가 158.84로 가장 높으며, 프로모션을 사용한 고객의 평균 주문액은 542,620원입니다.</p>
+                    
+                    <h4 style="font-weight: 600; color: #4b5563; margin-bottom: 8px;">실행 계획:</h4>
+                    <ul style="list-style-type: disc; padding-left: 20px; margin-bottom: 16px;">
+                        <li>5천원 이하 소액 프로모션 비중 확대 (특히 첫 구매 고객 대상)</li>
+                        <li>프로모션 사용 비율이 낮은 요일/시간대에 특별 프로모션 제공</li>
+                        <li>구매 금액 구간별 차등화된 프로모션 설계</li>
+                        <li>프로모션 코드 사용자 대상 교차판매(Cross-selling) 강화</li>
+                    </ul>
+                    
+                    <div class="metrics-container">
+                        <div class="metric-box">
+                            <p><span style="font-weight: 600;">핵심 성과 지표 (KPI):</span><br>
+                            프로모션 ROI 10% 개선, 프로모션 사용률 5% 증가</p>
+                        </div>
+                        <div class="metric-box" style="background-color: #ecfdf5;">
+                            <p><span style="font-weight: 600;">기대 효과:</span><br>
+                            매출 3.5% 증가 예상</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container" style="margin-top: 32px; background: linear-gradient(to right, #eff6ff, #eef2ff);">
+                <h2 style="font-size: 1.25rem; font-weight: 700; color: #1e40af; margin-bottom: 16px;">종합 효과</h2>
+                <p style="color: #4b5563; margin-bottom: 16px;">
+                    모든 전략을 효과적으로 실행할 경우, 약 <span style="font-weight: 700; color: #2563eb;">20.2%</span>의 매출 증가가 예상됩니다. 
+                    이는 연간 약 <span style="font-weight: 700; color: #2563eb;">181억원</span>의 추가 매출에 해당합니다.
+                </p>
+                
+                <h3 style="font-size: 1.125rem; font-weight: 600; color: #1e40af; margin-bottom: 12px;">우선순위 및 실행 계획</h3>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>우선순위</th>
+                                <th>전략</th>
+                                <th>예상 효과</th>
+                                <th>난이도</th>
+                                <th>실행 기간</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>VIP 고객 충성도 강화 전략</td>
+                                <td>매출 8.2% 증가</td>
+                                <td>중간</td>
+                                <td>1-2개월</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>프로모션 최적화 전략</td>
+                                <td>매출 3.5% 증가</td>
+                                <td>낮음</td>
+                                <td>즉시 실행</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>시간 기반 마케팅 전략</td>
+                                <td>매출 3.2% 증가</td>
+                                <td>낮음</td>
+                                <td>즉시 실행</td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td>결제 방법 최적화 전략</td>
+                                <td>매출 2.8% 증가</td>
+                                <td>중간</td>
+                                <td>1개월</td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td>월별 매출 변동 대응 전략</td>
+                                <td>매출 2.5% 증가</td>
+                                <td>높음</td>
+                                <td>2-3개월</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="margin-top: 24px; padding: 16px; background-color: white; border-radius: 8px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
+                    <h3 style="font-size: 1.125rem; font-weight: 600; color: #1e40af; margin-bottom: 8px;">결론 및 다음 단계</h3>
+                    <p style="color: #4b5563; margin-bottom: 12px;">
+                        데이터 분석 결과, VIP 고객 관리와 프로모션 최적화가 가장 효과적인 매출 향상 전략으로 확인되었습니다. 
+                        효과가 가장 크고 실행이 쉬운 전략부터 단계적으로 구현하는 것을 권장합니다.
+                    </p>
+                    <ul style="list-style-type: disc; padding-left: 20px; color: #4b5563;">
+                        <li>VIP 고객 충성도 프로그램 설계 및 구현</li>
+                        <li>5천원 이하 소액 프로모션 비중 확대</li>
+                        <li>일요일 및 심야 시간대 특별 이벤트 계획</li>
+                        <li>신용카드 결제 혜택 강화</li>
+                        <li>6-7월 매출 감소 대응 전략 수립</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 탭 전환 기능
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // 활성 탭 스타일 변경
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // 탭 콘텐츠 표시/숨김
+                const tabId = tab.getAttribute('data-tab');
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === tabId) {
+                        content.classList.add('active');
+                    }
+                });
+            });
+        });
+
+        // 차트 데이터 및 설정
+        const monthlyData = [
+            {month: '2022-02', revenue: 133.3, transactions: 24511},
+            {month: '2022-03', revenue: 158.6, transactions: 28801},
+            {month: '2022-04', revenue: 161.4, transactions: 29237},
+            {month: '2022-05', revenue: 164.6, transactions: 30084},
+            {month: '2022-06', revenue: 157.0, transactions: 28587},
+            {month: '2022-07', revenue: 138.9, transactions: 25162}
+        ];
+
+        const growthData = [
+            {month: '2022-03', revenue_growth: 18.99, transaction_growth: 17.50},
+            {month: '2022-04', revenue_growth: 1.74, transaction_growth: 1.51},
+            {month: '2022-05', revenue_growth: 1.98, transaction_growth: 2.90},
+            {month: '2022-06', revenue_growth: -4.58, transaction_growth: -4.98},
+            {month: '2022-07', revenue_growth: -11.56, transaction_growth: -11.98}
+        ];
+
+        const segmentData = [
+            {segment: '1회 구매', revenue_share: 5.08, customer_count: 8603},
+            {segment: '2회 구매', revenue_share: 5.80, customer_count: 4855},
+            {segment: '3-5회 구매', revenue_share: 17.93, customer_count: 7860},
+            {segment: '6-10회 구매', revenue_share: 24.35, customer_count: 5310},
+            {segment: '11회 이상 구매', revenue_share: 46.84, customer_count: 4244}
+        ];
+
+        // 차트 색상
+        const chartColors = [
+            '#0088FE', 
+            '#00C49F', 
+            '#FFBB28', 
+            '#FF8042', 
+            '#8884D8'
+        ];
+
+        // 월별 매출 및 거래 건수 차트
+        const monthlyRevenueCtx = document.getElementById('monthly-revenue-chart').getContext('2d');
+        new Chart(monthlyRevenueCtx, {
+            type: 'bar',
+            data: {
+                labels: monthlyData.map(d => d.month),
+                datasets: [
+                    {
+                        label: '총 매출 (억원)',
+                        data: monthlyData.map(d => d.revenue),
+                        backgroundColor: '#0088FE',
+                        order: 1
+                    },
+                    {
+                        label: '거래 건수',
+                        data: monthlyData.map(d => d.transactions),
+                        type: 'line',
+                        borderColor: '#FF8042',
+                        tension: 0.1,
+                        yAxisID: 'y1',
+                        order: 0
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '매출 (억원)'
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        title: {
+                            display: true,
+                            text: '거래 건수'
+                        }
+                    }
+                }
+            }
+        });
+
+        // 월별 성장률 차트
+        const monthlyGrowthCtx = document.getElementById('monthly-growth-chart').getContext('2d');
+        new Chart(monthlyGrowthCtx, {
+            type: 'line',
+            data: {
+                labels: growthData.map(d => d.month),
+                datasets: [
+                    {
+                        label: '매출 성장률 (%)',
+                        data: growthData.map(d => d.revenue_growth),
+                        borderColor: '#0088FE',
+                        tension: 0.1
+                    },
+                    {
+                        label: '거래 건수 성장률 (%)',
+                        data: growthData.map(d => d.transaction_growth),
+                        borderColor: '#FF8042',
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: '성장률 (%)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // 고객 세그먼트별 매출 기여도 차트
+        const customerRevenueCtx = document.getElementById('customer-revenue-chart').getContext('2d');
+        new Chart(customerRevenueCtx, {
+            type: 'bar',
+            data: {
+                labels: segmentData.map(d => d.segment),
+                datasets: [
+                    {
+                        label: '매출 기여도 (%)',
+                        data: segmentData.map(d => d.revenue_share),
+                        backgroundColor: chartColors
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '매출 기여도 (%)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // 고객 세그먼트별 고객 수 분포 차트
+        const customerSegmentCtx = document.getElementById('customer-segment-chart').getContext('2d');
+        new Chart(customerSegmentCtx, {
+            type: 'pie',
+            data: {
+                labels: segmentData.map(d => d.segment),
+                datasets: [
+                    {
+                        data: segmentData.map(d => d.customer_count),
+                        backgroundColor: chartColors
+                    }
+                ]
+            },
+            options: {
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value}명 (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 'promoData'를 실제 데이터로 정의합니다. (예시 데이터 사용)
+        const promoData = [
+            { label: '프로모션 사용', value: 31.25 },
+            { label: '프로모션 미사용', value: 68.75 }
+        ];
+
+        // 파이 차트 생성
+        const promoUsageCtx = document.getElementById('promo-usage-chart').getContext('2d');
+        new Chart(promoUsageCtx, {
+            type: 'pie',
+            data: {
+            labels: promoData.map(d => d.label),
+            datasets: [{
+                data: promoData.map(d => d.value),
+                backgroundColor: ['#0088FE', '#FFBB28'],
+                borderWidth: 1
+            }]
+            },
+            options: {
+            responsive: true,
+            plugins: {
+                title: {
+                display: true,
+                text: '프로모션 사용 여부에 따른 매출 비교'
+                },
+                legend: {
+                position: 'bottom'
+                },
+                tooltip: {
+                callbacks: {
+                    label: function(context) {
+                    return `${context.label}: ${context.raw}%`;
+                    }
+                }
+                }
+            }
+            }
+        });
+        // 프로모션 금액별 효율성 데이터
+        const promoRangeData = [
+            {range: '5천원 이하', efficiency: 158.84},
+            {range: '5천-1만원', efficiency: 79.47},
+            {range: '1-2만원', efficiency: 45.36},
+            {range: '2-5만원', efficiency: 16.54}
+        ];
+        
+        // 바 차트 생성
+        const promoEfficiencyCtx = document.getElementById('promo-efficiency-chart').getContext('2d');
+        new Chart(promoEfficiencyCtx, {
+            type: 'bar',
+            data: {
+            labels: promoRangeData.map(d => d.range),
+            datasets: [{
+                label: '효율성 (ROI)',
+                data: promoRangeData.map(d => d.efficiency),
+                backgroundColor: '#00C49F',
+                borderWidth: 1
+            }]
+            },
+            options: {
+            responsive: true,
+            scales: {
+                y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: '효율성 (ROI)'
+                }
+                }
+            },
+            plugins: {
+                title: {
+                display: true,
+                text: '프로모션 금액별 효율성 분석'
+                }
+            }
+            }
+        });
+        // 결제 방법별 매출 기여도 데이터
+        const paymentData = [
+            {method: 'Credit Card', share: 35.17},
+            {method: 'Gopay', share: 19.92},
+            {method: 'OVO', share: 19.83},
+            {method: 'Debit Card', share: 16.03},
+            {method: 'LinkAja', share: 9.04}
+        ];
+        
+        // 파이 차트 생성
+        const paymentShareCtx = document.getElementById('payment-share-chart').getContext('2d');
+        new Chart(paymentShareCtx, {
+            type: 'pie',
+            data: {
+            labels: paymentData.map(d => d.method),
+            datasets: [{
+                data: paymentData.map(d => d.share),
+                backgroundColor: ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'],
+                borderWidth: 1
+            }]
+            },
+            options: {
+            responsive: true,
+            plugins: {
+                title: {
+                display: true,
+                text: '결제 방법별 매출 기여도'
+                },
+                legend: {
+                position: 'bottom'
+                },
+                tooltip: {
+                callbacks: {
+                    label: function(context) {
+                    return `${context.label}: ${context.raw}%`;
+                    }
+                }
+                }
+            }
+            }
+        });
+        // 결제 방법별 고객 충성도 데이터
+        const loyaltyData = [
+            {method: 'Credit Card', loyalty: 3.77},
+            {method: 'OVO', loyalty: 3.05},
+            {method: 'Gopay', loyalty: 3.03},
+            {method: 'Debit Card', loyalty: 2.72},
+            {method: 'LinkAja', loyalty: 1.91}
+        ];
+        
+        // 바 차트 생성
+        const paymentLoyaltyCtx = document.getElementById('payment-loyalty-chart').getContext('2d');
+        new Chart(paymentLoyaltyCtx, {
+            type: 'bar',
+            data: {
+            labels: loyaltyData.map(d => d.method),
+            datasets: [{
+                label: '고객당 평균 주문 수',
+                data: loyaltyData.map(d => d.loyalty),
+                backgroundColor: '#8884D8',
+                borderWidth: 1
+            }]
+            },
+            options: {
+            responsive: true,
+            scales: {
+                y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: '고객당 평균 주문 수'
+                }
+                }
+            },
+            plugins: {
+                title: {
+                display: true,
+                text: '결제 방법별 고객 충성도'
+                }
+            }
+            }
+        });
+        // 요일별 매출 데이터
+        const dayData = [
+            {day: 'Sunday', revenue: 153.3},
+            {day: 'Monday', revenue: 140.3},
+            {day: 'Saturday', revenue: 130.8},
+            {day: 'Tuesday', revenue: 123.2},
+            {day: 'Wednesday', revenue: 123.2},
+            {day: 'Thursday', revenue: 121.8},
+            {day: 'Friday', revenue: 121.1}
+        ];
+        
+        // 요일 순서 정렬
+        const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const sortedDayData = dayOrder.map(day => {
+            const entry = dayData.find(d => d.day === day);
+            return entry ? entry : {day: day, revenue: 0};
+        });
+        
+        // 바 차트 생성
+        const dayRevenueCtx = document.getElementById('day-revenue-chart').getContext('2d');
+        new Chart(dayRevenueCtx, {
+            type: 'bar',
+            data: {
+            labels: sortedDayData.map(d => d.day),
+            datasets: [{
+                label: '총 매출 (억원)',
+                data: sortedDayData.map(d => d.revenue),
+                backgroundColor: '#0088FE',
+                borderWidth: 1
+            }]
+            },
+            options: {
+            responsive: true,
+            scales: {
+                y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: '매출 (억원)'
+                }
+                }
+            },
+            plugins: {
+                title: {
+                display: true,
+                text: '요일별 매출 패턴'
+                }
+            }
+            }
+        });
+        // 시간대별 매출 데이터
+        const hourData = [
+            {hour: 0, revenue: 58.2}, {hour: 1, revenue: 54.1}, {hour: 2, revenue: 45.3},
+            {hour: 3, revenue: 32.3}, {hour: 4, revenue: 19.5}, {hour: 5, revenue: 10.4},
+            {hour: 6, revenue: 7.1}, {hour: 7, revenue: 7.2}, {hour: 8, revenue: 9.8},
+            {hour: 9, revenue: 14.6}, {hour: 10, revenue: 19.7}, {hour: 11, revenue: 24.9},
+            {hour: 12, revenue: 30.0}, {hour: 13, revenue: 33.6}, {hour: 14, revenue: 36.2},
+            {hour: 15, revenue: 38.6}, {hour: 16, revenue: 41.3}, {hour: 17, revenue: 43.6},
+            {hour: 18, revenue: 45.2}, {hour: 19, revenue: 46.8}, {hour: 20, revenue: 48.0},
+            {hour: 21, revenue: 48.7}, {hour: 22, revenue: 53.3}, {hour: 23, revenue: 57.5}
+        ];
+        
+        // 바 차트 생성
+        const hourRevenueCtx = document.getElementById('hour-revenue-chart').getContext('2d');
+        new Chart(hourRevenueCtx, {
+            type: 'bar',
+            data: {
+            labels: hourData.map(d => d.hour),
+            datasets: [{
+                label: '총 매출 (억원)',
+                data: hourData.map(d => d.revenue),
+                backgroundColor: '#00C49F',
+                borderWidth: 1
+            }]
+            },
+            options: {
+            responsive: true,
+            scales: {
+                y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: '매출 (억원)'
+                }
+                },
+                x: {
+                title: {
+                    display: true,
+                    text: '시간대'
+                }
+                }
+            },
+            plugins: {
+                title: {
+                display: true,
+                text: '시간대별 매출 패턴'
+                }
+            }
+            }
+        });
+    </script>
+</body>
+</html>
